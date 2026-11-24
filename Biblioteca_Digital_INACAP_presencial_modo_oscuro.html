@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Biblioteca Digital INACAP · Prototipo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --red:#C8102E;--red-d:#9E0B24;--red-50:#FDF2F4;--red-100:#FADDE2;
+  --white:#FFFFFF;--bg:#F5F6F8;--ink:#202124;--ink-2:#344054;--mut:#667085;--mut-2:#98A2B3;
+  --line:#E6E8EC;--line-2:#F0F2F5;
+  --ok:#067647;--ok-bg:#E8F5EC;--warn:#B54708;--warn-bg:#FEF3D7;--bad:#B42318;--bad-bg:#FDE7E5;--info:#175CD3;--info-bg:#E6EEFE;
+  --r:14px;--sh:0 1px 2px rgba(16,24,40,.04),0 1px 3px rgba(16,24,40,.05);--sh-lg:0 16px 40px -10px rgba(16,24,40,.22);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:14px;line-height:1.5;font-feature-settings:"cv11","ss01";-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4,p{margin:0}
+a{color:var(--red);text-decoration:none}
+button{font:inherit;cursor:pointer}
+svg{flex:none}
+code{background:var(--line-2);padding:2px 6px;border-radius:6px;font-size:13px;color:var(--ink-2)}
+.muted{color:var(--mut)}
+:focus-visible{outline:3px solid rgba(200,16,46,.28);outline-offset:2px;border-radius:8px}
+
+/* ---------- Botones ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;border:1px solid var(--red);background:var(--red);color:#fff;padding:0 16px;border-radius:10px;font-weight:600;font-size:14px;transition:background .15s,border-color .15s,box-shadow .15s;white-space:nowrap}
+.btn:hover{background:var(--red-d);border-color:var(--red-d)}
+.btn:disabled{background:var(--line-2);border-color:var(--line);color:var(--mut-2);cursor:not-allowed}
+.btn-ghost{background:#fff;color:var(--ink-2);border-color:#D0D5DD;box-shadow:var(--sh)}
+.btn-ghost:hover{background:var(--bg);border-color:var(--mut-2);color:var(--ink)}
+.btn-ghost:disabled{box-shadow:none}
+.btn-danger{background:#fff;color:var(--bad);border-color:#F2B8B3;box-shadow:var(--sh)}
+.btn-danger:hover{background:var(--bad-bg);border-color:var(--bad);color:var(--bad)}
+.btn-sm{height:32px;padding:0 12px;font-size:13px;border-radius:8px;gap:6px}
+.btn-block{width:100%}
+.icon-btn{border:0;background:transparent;color:var(--mut);width:36px;height:36px;border-radius:10px;display:inline-grid;place-items:center}
+.icon-btn:hover{background:var(--line-2);color:var(--ink)}
+.link-btn{border:0;background:none;color:var(--red);font-weight:600;padding:0;font-size:13.5px}
+.link-btn:hover{text-decoration:underline}
+
+/* ---------- Etiquetas de estado ---------- */
+.tag{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:999px;font-size:12.5px;font-weight:600;white-space:nowrap}
+.tag::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.tag.ok{background:var(--ok-bg);color:var(--ok)}.tag.warn{background:var(--warn-bg);color:var(--warn)}
+.tag.bad{background:var(--bad-bg);color:var(--bad)}.tag.info{background:var(--info-bg);color:var(--info)}
+.tag.gray{background:var(--line-2);color:var(--ink-2)}
+.tag.red{background:var(--red-50);color:var(--red-d)}.tag.red::before{display:none}
+
+/* ---------- Formularios ---------- */
+.field{margin-bottom:16px}
+.field label{display:block;font-weight:600;font-size:13px;margin-bottom:6px;color:var(--ink-2)}
+.field label em{color:var(--red);font-style:normal;margin-left:3px}
+.field input,.field select,.field textarea,.input{width:100%;height:42px;border:1px solid #D0D5DD;border-radius:10px;padding:0 12px;font:inherit;background:#fff;color:var(--ink);box-shadow:var(--sh);transition:border-color .15s,box-shadow .15s}
+.field textarea{height:auto;min-height:84px;padding:10px 12px;resize:vertical}
+.field input::placeholder,.input::placeholder{color:var(--mut-2)}
+.field input:focus,.field select:focus,.field textarea:focus,.input:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 4px rgba(200,16,46,.12)}
+.field .invalid{border-color:var(--bad);box-shadow:0 0 0 4px rgba(180,35,24,.1)}
+.hint{font-size:12.5px;color:var(--mut);margin-top:6px}
+.err{display:flex;gap:6px;align-items:flex-start;color:var(--bad);font-size:12.5px;font-weight:500;margin-top:6px}
+.err:empty{display:none}
+.err:not(:empty)::before{content:"";width:14px;height:14px;flex:none;margin-top:1.5px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23B42318' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cline x1='12' y1='8' x2='12' y2='12'/%3E%3Cline x1='12' y1='16' x2='12.01' y2='16'/%3E%3C/svg%3E") center/contain no-repeat}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.pw-wrap{position:relative}
+.pw-wrap input{padding-right:46px}
+.pw-wrap .icon-btn{position:absolute;right:3px;top:3px;height:36px}
+.rules{list-style:none;padding:12px 14px;margin:10px 0 0;display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;font-size:12.5px;color:var(--mut);background:var(--bg);border-radius:10px}
+.rules li{display:flex;align-items:center;gap:8px}
+.rules li::before{content:"";width:14px;height:14px;border-radius:50%;border:1.5px solid #CBD0D8;flex:none}
+.rules li.on{color:var(--ok);font-weight:500}
+.rules li.on::before{background:var(--ok) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E") center/9px no-repeat;border-color:var(--ok)}
+
+/* ---------- Alertas ---------- */
+.alert{display:flex;gap:10px;padding:12px 14px;border-radius:10px;font-size:13.5px;margin-bottom:16px;align-items:flex-start;border:1px solid transparent}
+.alert[hidden]{display:none}
+.alert.bad{background:var(--bad-bg);color:var(--bad);border-color:#F6C9C5}.alert.warn{background:var(--warn-bg);color:var(--warn);border-color:#F6DFA3}
+.alert.info{background:var(--info-bg);color:var(--info);border-color:#C9DAFB}.alert.ok{background:var(--ok-bg);color:var(--ok);border-color:#BFE3CB}
+
+/* ---------- Login ---------- */
+.login{min-height:100vh;display:grid;grid-template-columns:minmax(420px,5fr) 6fr}
+.login-side{background:var(--red-d);color:#fff;padding:56px 64px;display:flex;flex-direction:column;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:40px;height:40px;border-radius:11px;background:var(--red);color:#fff;display:grid;place-items:center}
+.login-side .logo{background:#fff;color:var(--red)}
+.brand b{display:block;font-size:15px;line-height:1.2;font-weight:700}
+.brand small{display:block;font-size:12px;opacity:.7;line-height:1.3}
+.login-side h2{font-size:36px;line-height:1.15;font-weight:700;letter-spacing:-.025em;max-width:440px}
+.login-side .lead{opacity:.8;max-width:420px;margin-top:14px;font-size:15px}
+.feat{display:grid;gap:16px;margin-top:36px}
+.feat div{display:flex;gap:14px;align-items:flex-start}
+.feat span{width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.12);display:grid;place-items:center;flex:none}
+.feat b{display:block;font-size:14px}.feat small{opacity:.75;font-size:13px}
+.login-main{display:grid;place-items:center;padding:32px}
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh)}
+.login-card{width:100%;max-width:420px;padding:36px;box-shadow:var(--sh-lg)}
+.login-card h1{font-size:24px;letter-spacing:-.02em;font-weight:700}
+.login-card .sub{color:var(--mut);margin:6px 0 24px;font-size:14px}
+.login-links{display:flex;justify-content:space-between;align-items:center;margin:-4px 0 20px}
+.demo-box{margin-top:22px;padding-top:20px;border-top:1px solid var(--line);display:grid;gap:10px}
+.fine{font-size:12px;color:var(--mut);text-align:center;margin-top:16px}
+
+/* ---------- Estructura ---------- */
+.side{position:fixed;inset:0 auto 0 0;width:264px;background:#fff;border-right:1px solid var(--line);display:flex;flex-direction:column;padding:20px 16px 16px;z-index:30;transition:transform .2s}
+.side .brand{padding:2px 8px 22px}
+.side .brand b{font-size:14.5px;color:var(--ink)}.side .brand small{color:var(--mut);opacity:1}
+.nav-label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--mut-2);margin:18px 12px 8px}
+.nav{position:relative;display:flex;align-items:center;gap:12px;height:40px;padding:0 12px;border-radius:10px;color:var(--ink-2);font-weight:500;margin-bottom:2px;transition:background .15s}
+.nav svg{color:var(--mut-2)}
+.nav:hover{background:var(--bg);color:var(--ink)}
+.nav.active{background:var(--red-50);color:var(--red-d);font-weight:600}
+.nav.active svg{color:var(--red)}
+.nav.active::before{content:"";position:absolute;left:-16px;top:9px;bottom:9px;width:3px;border-radius:0 3px 3px 0;background:var(--red)}
+.nav.locked{color:var(--mut-2)}
+.nav.locked .lk{margin-left:auto}
+.side-user{margin-top:auto;border-top:1px solid var(--line);padding-top:16px;display:grid;gap:12px}
+.side-user .who2{display:flex;align-items:center;gap:10px;padding:0 4px}
+.side-user b{display:block;font-size:13.5px;line-height:1.25}.side-user small{color:var(--mut);font-size:12.5px}
+.main{margin-left:264px;min-width:0}
+.top{position:sticky;top:0;z-index:20;height:64px;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;padding:0 40px}
+.crumb{display:flex;align-items:center;gap:8px;color:var(--mut);font-size:13.5px}
+.crumb b{color:var(--ink);font-weight:600}
+.grow{flex:1}
+.chip{display:inline-flex;gap:8px;align-items:center;height:32px;padding:0 12px;border:1px solid var(--line);border-radius:999px;font-size:13px;color:var(--ink-2);background:#fff}
+.chip span{text-transform:capitalize}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--red);color:#fff;display:grid;place-items:center;font-weight:600;font-size:13px;flex:none}
+.menu-btn{display:none}
+.content{padding:32px 40px 56px;max-width:1400px;margin:0 auto}
+.page-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:28px;flex-wrap:wrap}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--red);margin-bottom:6px}
+.page-head h1{font-size:28px;line-height:1.2;letter-spacing:-.025em;font-weight:700}
+.page-head p{color:var(--mut);margin-top:6px;font-size:15px;max-width:640px}
+.scrim{display:none}
+
+/* ---------- Tarjetas ---------- */
+.grid{display:grid;gap:20px}
+.g4{grid-template-columns:repeat(4,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:1fr 1fr}.g21{grid-template-columns:1.7fr 1fr}
+.mb{margin-bottom:20px}
+.stat{padding:20px;display:flex;flex-direction:column;gap:12px}
+.stat-top{display:flex;justify-content:space-between;align-items:center}
+.stat-l{font-size:13px;font-weight:500;color:var(--mut)}
+.ico{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:var(--red-50);color:var(--red)}
+.ico.gray{background:var(--line-2);color:var(--ink-2)}.ico.ok{background:var(--ok-bg);color:var(--ok)}.ico.warn{background:var(--warn-bg);color:var(--warn)}.ico.info{background:var(--info-bg);color:var(--info)}
+.stat-v{font-size:32px;font-weight:700;letter-spacing:-.03em;line-height:1}
+.stat-v small{font-size:15px;font-weight:500;color:var(--mut);letter-spacing:0;margin-left:4px}
+.stat-f{display:grid;gap:8px;font-size:13px;color:var(--mut)}
+.stat-sub{display:flex;align-items:center;gap:6px}
+.stat-sub::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--mut-2)}
+.stat-sub.ok::before{background:var(--ok)}.stat-sub.warn::before{background:#F79009}.stat-sub.bad::before{background:var(--bad)}
+.bar{height:6px;background:var(--line-2);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--red);border-radius:99px}
+.panel{overflow:hidden}
+.panel-h{display:flex;justify-content:space-between;align-items:center;padding:18px 24px;border-bottom:1px solid var(--line);gap:12px;flex-wrap:wrap}
+.panel-h h3{font-size:16px;font-weight:600;letter-spacing:-.01em}
+.panel-h p{color:var(--mut);font-size:13px;margin-top:2px}
+.panel-b{padding:24px}
+.cta{padding:24px;display:flex;flex-direction:column;gap:14px;background:var(--red-50);border-color:var(--red-100)}
+.cta .ico{background:#fff;width:44px;height:44px;border-radius:12px}
+.cta h3{font-size:18px;letter-spacing:-.015em}.cta p{color:var(--ink-2)}
+.qa{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;color:var(--ink);font-weight:600;background:#fff;width:100%;text-align:left}
+.qa:hover{border-color:var(--red);background:var(--red-50)}
+.qa .ico{width:32px;height:32px}
+.qa svg:last-child{margin-left:auto;color:var(--mut-2)}
+.stack{display:grid;gap:12px}
+
+/* ---------- Tablas ---------- */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:640px}
+th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);font-weight:600;padding:12px 24px;background:#FAFAFB;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:14px 24px;border-bottom:1px solid var(--line-2);vertical-align:middle;color:var(--ink-2)}
+tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:#FAFAFB}
+tr.noh:hover td{background:transparent}
+td .acts{display:flex;gap:8px;flex-wrap:wrap}
+th.r,td.r{text-align:right}
+.t-strong{font-weight:600;color:var(--ink)}
+.cell{display:flex;align-items:center;gap:12px;min-width:0}
+.cell .sub{font-size:12.5px;color:var(--mut);line-height:1.3}
+.av{width:34px;height:34px;border-radius:50%;background:var(--red-50);color:var(--red-d);display:grid;place-items:center;font-weight:600;font-size:12px;flex:none}
+.bk{width:34px;height:42px;border-radius:6px;background:color-mix(in srgb,var(--c) 11%,#fff);color:var(--c);display:grid;place-items:center;font-weight:700;font-size:12px;flex:none;border:1px solid color-mix(in srgb,var(--c) 22%,#fff)}
+.cell .ttl{max-width:380px;white-space:normal;line-height:1.35}
+.select-sm{height:34px;border:1px solid #D0D5DD;border-radius:8px;padding:0 10px;font:inherit;background:#fff;color:var(--ink-2)}
+tr.flash td{animation:flash 2.2s ease-out}
+@keyframes flash{0%,35%{background:var(--red-100)}100%{background:transparent}}
+
+/* ---------- Estados vacíos ---------- */
+.empty-state{display:flex;flex-direction:column;align-items:center;text-align:center;padding:48px 24px;gap:6px}
+.empty-state .eico{width:52px;height:52px;border-radius:50%;background:var(--line-2);color:var(--mut);display:grid;place-items:center;margin-bottom:8px}
+.empty-state h4{font-size:15px;font-weight:600;color:var(--ink)}
+.empty-state p{color:var(--mut);max-width:380px}
+.empty-state .btn{margin-top:12px}
+.empty-state.sm{padding:32px 20px}
+
+/* ---------- Tabs / filtros ---------- */
+.tabs{display:inline-flex;gap:2px;background:var(--line-2);padding:4px;border-radius:12px;margin-bottom:20px;flex-wrap:wrap}
+.tab{border:0;background:transparent;color:var(--mut);padding:7px 14px;border-radius:9px;font-weight:600;font-size:13.5px;display:inline-flex;align-items:center;gap:8px}
+.tab:hover{color:var(--ink)}
+.tab.on{background:#fff;color:var(--ink);box-shadow:var(--sh)}
+.tab .n{background:var(--line);color:var(--ink-2);border-radius:99px;padding:0 7px;font-size:12px;line-height:18px}
+.tab.on .n{background:var(--red-50);color:var(--red-d)}
+.toolbar{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+.toolbar .search{position:relative;flex:1;min-width:260px;max-width:460px}
+.toolbar .search>span{position:absolute;left:13px;top:12px;color:var(--mut-2);pointer-events:none}
+.toolbar .search input{padding-left:40px}
+.toolbar select.input{width:auto;min-width:200px}
+
+/* ---------- Libros ---------- */
+.books{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:20px}
+.book{display:flex;flex-direction:column;overflow:hidden;transition:box-shadow .15s,transform .15s}
+.book:hover{box-shadow:0 8px 24px -8px rgba(16,24,40,.16);transform:translateY(-1px)}
+.cover{height:104px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 10%,#fff);color:var(--c);font-size:32px;font-weight:700;letter-spacing:.04em;border-bottom:1px solid color-mix(in srgb,var(--c) 16%,#fff)}
+.b-body{padding:18px;display:flex;flex-direction:column;gap:6px;flex:1}
+.cat{font-size:11.5px;font-weight:600;color:var(--red-d);text-transform:uppercase;letter-spacing:.06em}
+.book h3{font-size:15px;line-height:1.35;font-weight:600;letter-spacing:-.005em}
+.b-foot{margin-top:6px}
+.b-actions{display:flex;gap:8px;margin-top:auto;padding-top:14px}
+.b-actions .btn{flex:1}
+.detail-cover{height:96px;border-radius:12px;margin-bottom:16px;border:1px solid color-mix(in srgb,var(--c) 16%,#fff)}
+.kv{display:grid;grid-template-columns:130px 1fr;gap:10px 12px;margin:16px 0 4px;font-size:14px}
+.kv dt{color:var(--mut)}.kv dd{margin:0;font-weight:500;color:var(--ink)}
+
+/* ---------- Modales y notificaciones ---------- */
+.overlay{position:fixed;inset:0;background:rgba(16,24,40,.55);backdrop-filter:blur(2px);display:grid;place-items:center;padding:16px;z-index:100;animation:fade .15s}
+.modal{background:#fff;border-radius:16px;width:100%;max-width:460px;max-height:92vh;display:flex;flex-direction:column;box-shadow:var(--sh-lg);animation:pop .18s}
+.modal.wide{max-width:640px}
+.m-head{display:flex;justify-content:space-between;align-items:center;padding:20px 20px 4px 24px}
+.m-head h3{font-size:18px;letter-spacing:-.015em}
+.m-body{padding:12px 24px 22px;overflow:auto;color:var(--ink-2)}
+.m-foot{display:flex;justify-content:flex-end;gap:10px;padding:16px 24px;border-top:1px solid var(--line);background:#FAFAFB;border-radius:0 0 16px 16px;flex-wrap:wrap}
+.confirm{display:flex;gap:16px;align-items:flex-start}
+.c-ico{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;flex:none;background:var(--red-50);color:var(--red)}
+.c-ico.danger{background:var(--bad-bg);color:var(--bad)}
+.confirm p{padding-top:2px}
+#toasts{position:fixed;right:24px;bottom:24px;display:grid;gap:12px;z-index:200}
+.toast{position:relative;overflow:hidden;display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:start;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--sh-lg);padding:14px 10px 16px 14px;width:360px;max-width:calc(100vw - 32px);animation:slide .22s;--tc:var(--ok);--tb:var(--ok-bg)}
+.toast.error{--tc:var(--bad);--tb:var(--bad-bg)}.toast.warn{--tc:var(--warn);--tb:var(--warn-bg)}.toast.info{--tc:var(--info);--tb:var(--info-bg)}
+.t-ico{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--tb);color:var(--tc)}
+.t-body b{display:block;font-size:14px;line-height:1.3}.t-body p{color:var(--mut);font-size:13px;margin-top:2px}
+.t-x{width:28px;height:28px}
+.t-bar{position:absolute;left:0;bottom:0;height:3px;width:100%;background:var(--tc);transform-origin:left;animation:shrink 4.2s linear forwards}
+@keyframes fade{from{opacity:0}}
+@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.98)}}
+@keyframes slide{from{transform:translateY(10px);opacity:0}}
+@keyframes shrink{to{transform:scaleX(0)}}
+
+/* ---------- Gráficos ---------- */
+.bars svg{width:100%;height:auto;display:block}
+.hbar{display:grid;grid-template-columns:22px minmax(120px,1.5fr) 3fr 28px;gap:12px;align-items:center;margin-bottom:14px;font-size:13.5px}
+.hbar .rk{color:var(--mut-2);font-weight:600;font-size:12.5px}
+.hbar .tr{background:var(--line-2);height:8px;border-radius:99px;overflow:hidden}
+.hbar .fl{height:100%;background:var(--red);border-radius:99px}
+.hbar .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink);font-weight:500}
+.hbar b{text-align:right}
+.donut-row{display:flex;gap:32px;align-items:center;flex-wrap:wrap}
+.donut{width:176px;height:176px}
+.d-n{font-size:7px;font-weight:700;fill:var(--ink)}.d-l{font-size:2.6px;fill:var(--mut)}
+.legend{display:grid;gap:12px;flex:1;min-width:180px}
+.legend div{display:flex;align-items:center;gap:10px;font-size:13.5px}
+.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.legend b{margin-left:auto}
+.legend small{color:var(--mut);width:36px;text-align:right}
+.meter{margin-bottom:20px}
+.meter:last-child{margin-bottom:0}
+.meter .top2{display:flex;justify-content:space-between;align-items:center;font-size:13.5px;margin-bottom:8px;color:var(--ink-2)}
+.meter .top2 b{color:var(--ink)}
+.meter .tr{height:8px;background:var(--line-2);border-radius:99px;overflow:hidden}
+.meter .fl{height:100%;border-radius:99px;background:var(--red)}
+
+.denied{max-width:520px;margin:48px auto;text-align:center;padding:48px 36px}
+.denied .big{width:64px;height:64px;border-radius:50%;background:var(--bad-bg);color:var(--bad);display:grid;place-items:center;margin:0 auto 18px}
+.denied h1{font-size:22px;margin-bottom:8px;letter-spacing:-.02em}
+.denied p{color:var(--mut);margin-bottom:22px}
+.ul{margin:10px 0 0;padding-left:20px;display:grid;gap:8px}
+
+@media (max-width:1180px){.g4{grid-template-columns:repeat(2,1fr)}.g21{grid-template-columns:1fr}.content{padding:28px 28px 48px}.top{padding:0 28px}}
+@media (max-width:900px){
+  .login{grid-template-columns:1fr}
+  .login-side{padding:28px}.login-side h2{font-size:26px}.feat,.login-side .lead{display:none}
+  .side{transform:translateX(-100%)}
+  body.menu-open .side{transform:none;box-shadow:var(--sh-lg)}
+  body.menu-open .scrim{display:block;position:fixed;inset:0;background:rgba(16,24,40,.5);z-index:25}
+  .main{margin-left:0}.menu-btn{display:inline-grid}
+  .content{padding:20px 16px 40px}.top{padding:0 16px}
+  .g3,.g2{grid-template-columns:1fr}.chip{display:none}
+}
+@media (max-width:560px){.g4{grid-template-columns:1fr}.row2{grid-template-columns:1fr}.rules{grid-template-columns:1fr}.kv{grid-template-columns:1fr}.page-head h1{font-size:24px}}
+
+/* Modo oscuro: variables y superficies */
+html[data-theme="dark"]{color-scheme:dark;--white:#171D29;--bg:#10151F;--ink:#F2F4F8;--ink-2:#D5DCE7;--mut:#A8B3C4;--mut-2:#8793A6;--line:#344052;--line-2:#252E3D;--red-50:#38212B;--red-100:#58303C;--ok:#70D6A3;--ok-bg:#193A31;--warn:#FFD18B;--warn-bg:#443522;--bad:#FF9C95;--bad-bg:#482A2C;--info:#A6C6FF;--info-bg:#253753;--sh:0 1px 4px rgba(0,0,0,.2);--sh-lg:0 18px 48px rgba(0,0,0,.4)}
+html[data-theme="dark"] .card,html[data-theme="dark"] .side,html[data-theme="dark"] .login-card,html[data-theme="dark"] .modal,html[data-theme="dark"] .toast,html[data-theme="dark"] .qa,html[data-theme="dark"] .chip,html[data-theme="dark"] .tab.on{background:#1B2330;color:var(--ink)}
+html[data-theme="dark"] .top{background:rgba(27,35,48,.96)}
+html[data-theme="dark"] .field input,html[data-theme="dark"] .field select,html[data-theme="dark"] .field textarea,html[data-theme="dark"] .input,html[data-theme="dark"] .select-sm{background:#202A39;color:var(--ink);border-color:#465267}
+html[data-theme="dark"] .btn-ghost,html[data-theme="dark"] .btn-danger{background:#252F3E;color:var(--ink);border-color:#48566B}
+html[data-theme="dark"] .btn-ghost:hover,html[data-theme="dark"] .qa:hover{background:#344052}
+html[data-theme="dark"] th,html[data-theme="dark"] .m-foot{background:#222C3B;color:var(--mut)}
+html[data-theme="dark"] tbody tr:hover td{background:#263244}
+html[data-theme="dark"] .cover,html[data-theme="dark"] .bk{filter:brightness(.78)}
+html[data-theme="dark"] .login-side{background:#601225}
+html[data-theme="dark"] .cta{background:#34232E}
+html[data-theme="dark"] .cta .ico{background:#242D3B}
+html[data-theme="dark"] code{background:#303C4D;color:var(--ink)}
+html[data-theme="dark"] .nav:hover{background:#273244}
+html[data-theme="dark"] .nav.active{background:#38212B}
+html[data-theme="dark"] .tabs,html[data-theme="dark"] .rules{background:#252F3E}
+html[data-theme="dark"] .tag.red{color:#FFB6C4}
+.theme-toggle{display:inline-flex;align-items:center;gap:7px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="modal-root"></div>
+<div id="toasts" aria-live="polite"></div>
+
+<script>
+(() => {
+'use strict';
+
+/* ============ Constantes y utilidades ============ */
+const KEY = 'bdi_state_v1', SKEY = 'bdi_session', LKEY = 'bdi_lock', TKEY = 'bdi_theme';
+  const applyTheme = () => { const dark = localStorage.getItem(TKEY) === 'dark'; document.documentElement.dataset.theme = dark ? 'dark' : 'light'; document.querySelectorAll('[data-a=theme]').forEach(b => { b.textContent = dark ? '☀ Modo claro' : '☾ Modo oscuro'; b.setAttribute('aria-pressed', String(dark)); }); };
+  applyTheme();
+const MAX_FAILS = 5, LOCK_SECONDS = 30, LOAN_DAYS = 14;
+const ROLE = { student: 'Estudiante', librarian: 'Bibliotecario', admin: 'Administrador' };
+const CATS = ['Programación','Bases de datos','Redes','Gestión de proyectos','Matemáticas','Ingeniería de software','Seguridad','Diseño UX'];
+const CATCOL = {'Programación':'#9E0B24','Bases de datos':'#1D4E89','Redes':'#0E7490','Gestión de proyectos':'#B54708','Matemáticas':'#7A4B94','Ingeniería de software':'#344054','Seguridad':'#2F6F4F','Diseño UX':'#C8102E'};
+const MONTHS = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const iso = d => { const z = new Date(d.getTime() - d.getTimezoneOffset() * 6e4); return z.toISOString().slice(0, 10); };
+const addDays = n => { const d = new Date(); d.setDate(d.getDate() + n); return iso(d); };
+const todayS = () => iso(new Date());
+const fmt = s => { if (!s) return '—'; const [y, m, d] = s.split('-'); return `${d}/${m}/${y}`; };
+const diffDays = (a, b) => Math.round((new Date(a + 'T00:00:00') - new Date(b + 'T00:00:00')) / 864e5);
+const nid = arr => Math.max(0, ...arr.map(x => x.id)) + 1;
+
+const IC = {
+  home:'<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
+  book:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
+  list:'<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>',
+  users:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  chart:'<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>',
+  logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>',
+  search:'<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
+  lock:'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  check:'<polyline points="20 6 9 17 4 12"/>',
+  x:'<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+  plus:'<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+  edit:'<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+  eye:'<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
+  eyeoff:'<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>',
+  key:'<path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.78 7.78 5.5 5.5 0 0 1 7.78-7.78zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>',
+  menu:'<line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>',
+  undo:'<polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>',
+  clock:'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  shield:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+  info:'<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>',
+  alert:'<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+  lib:'<path d="M3 21h18"/><path d="M5 21V8l7-5 7 5v13"/><path d="M9 21v-6h6v6"/>',
+  chev:'<polyline points="9 18 15 12 9 6"/>',
+  cal:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+  inbox:'<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+  arrow:'<line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>',
+  user:'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'
+};
+const ic = (n, s = 18) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[n]}</svg>`;
+const tag = (k, t) => `<span class="tag ${k}">${t}</span>`;
+
+/* ============ Datos de demostración ============ */
+function seed() {
+  const P = 'Estudiante#2026';
+  const users = [
+    {id:1,name:'Camila Rojas',email:'estudiante@inacap.cl',pass:P,role:'student',active:true},
+    {id:2,name:'Marcelo Fuentes',email:'bibliotecario@inacap.cl',pass:'Biblio#2026',role:'librarian',active:true},
+    {id:3,name:'Daniela Soto',email:'admin@inacap.cl',pass:'Admin#2026',role:'admin',active:true},
+    {id:4,name:'Benjamín Muñoz',email:'bmunoz@inacap.cl',pass:P,role:'student',active:true},
+    {id:5,name:'Valentina Parra',email:'vparra@inacap.cl',pass:P,role:'student',active:true},
+    {id:6,name:'Matías Contreras',email:'mcontreras@inacap.cl',pass:P,role:'student',active:true},
+    {id:7,name:'Fernanda Ibáñez',email:'fibanez@inacap.cl',pass:P,role:'student',active:true},
+    {id:8,name:'Sebastián Vera',email:'svera@inacap.cl',pass:P,role:'student',active:false}
+  ];
+  const B = [
+    ['Clean Code','Robert C. Martin','Programación',2008,3,'Principios y buenas prácticas para escribir código legible y mantenible.'],
+    ['Introduction to Algorithms','Cormen, Leiserson, Rivest, Stein','Programación',2009,4,'Referencia clásica sobre diseño y análisis de algoritmos.'],
+    ['Database System Concepts','Silberschatz, Korth, Sudarshan','Bases de datos',2019,3,'Fundamentos de diseño, modelado y administración de bases de datos.'],
+    ['SQL Antipatterns','Bill Karwin','Bases de datos',2010,2,'Errores frecuentes al diseñar bases de datos y consultas SQL, con alternativas.'],
+    ['Computer Networks','Andrew S. Tanenbaum','Redes',2011,3,'Introducción completa a las arquitecturas y protocolos de redes.'],
+    ['TCP/IP Illustrated, Vol. 1','W. Richard Stevens','Redes',1994,2,'Análisis detallado del funcionamiento de la familia de protocolos TCP/IP.'],
+    ['Scrum: el arte de hacer el doble de trabajo en la mitad de tiempo','Jeff Sutherland','Gestión de proyectos',2014,4,'Introducción práctica al marco Scrum y a la gestión ágil de equipos.'],
+    ['Agile Estimating and Planning','Mike Cohn','Gestión de proyectos',2005,2,'Técnicas de estimación y planificación de proyectos ágiles.'],
+    ['Cálculo de una variable','James Stewart','Matemáticas',2012,3,'Texto base de cálculo diferencial e integral.'],
+    ['Álgebra lineal y sus aplicaciones','David C. Lay','Matemáticas',2016,2,'Vectores, matrices y transformaciones lineales con aplicaciones.'],
+    ['Ingeniería de software','Ian Sommerville','Ingeniería de software',2011,4,'Procesos, requisitos, diseño y pruebas de sistemas de software.'],
+    ['Patrones de diseño','Gamma, Helm, Johnson, Vlissides','Ingeniería de software',1994,2,'Catálogo de patrones reutilizables de diseño orientado a objetos.'],
+    ['The Pragmatic Programmer','Andrew Hunt, David Thomas','Programación',2019,3,'Consejos prácticos para el desarrollo profesional de software.'],
+    ['Security Engineering','Ross Anderson','Seguridad',2020,1,'Diseño de sistemas seguros y confiables.'],
+    ['Applied Cryptography','Bruce Schneier','Seguridad',1996,2,'Protocolos, algoritmos y técnicas criptográficas.'],
+    ['Don\'t Make Me Think','Steve Krug','Diseño UX',2014,3,'Principios de usabilidad web explicados de forma simple.'],
+    ['The Design of Everyday Things','Don Norman','Diseño UX',2013,2,'Diseño centrado en las personas y usabilidad de objetos cotidianos.'],
+    ['Python para todos','Raúl González Duque','Programación',2011,3,'Introducción a la programación con Python.']
+  ].map((b, i) => ({id:i+1, code:'BDI-' + String(i+1).padStart(3,'0'), title:b[0], author:b[1], cat:b[2], year:b[3], total:b[4], desc:b[5]}));
+  const H = [[1,2,-160,-148],[4,1,-140,-130],[5,5,-120,-108],[1,13,-100,-90],[6,9,-85,-70],[7,3,-70,-58],[4,11,-55,-41],[5,16,-40,-30],[1,18,-30,-19],[6,7,-22,-12],[7,1,-15,-9]];
+  const loans = H.map((h, i) => ({id:i+1, studentId:h[0], bookId:h[1], from:addDays(h[2]), due:addDays(h[2]+LOAN_DAYS), returned:addDays(h[3])}));
+  [[1,1,-8],[1,7,-12],[4,3,-17],[5,11,-5],[6,14,-3],[7,9,-9]].forEach((a, i) =>
+    loans.push({id:12+i, studentId:a[0], bookId:a[1], from:addDays(a[2]), due:addDays(a[2]+LOAN_DAYS), returned:null}));
+  const requests = [
+    {id:1,studentId:1,bookId:16,date:addDays(-1),status:'pending'},
+    {id:2,studentId:4,bookId:2,date:addDays(-1),status:'pending'},
+    {id:3,studentId:5,bookId:5,date:addDays(-2),status:'pending'},
+    {id:4,studentId:6,bookId:13,date:addDays(0),status:'pending'},
+    {id:5,studentId:7,bookId:14,date:addDays(-1),status:'pending'},
+    {id:6,studentId:1,bookId:4,date:addDays(-20),status:'rejected'},
+    {id:7,studentId:7,bookId:9,date:addDays(-9),status:'approved',loanId:17},
+    {id:8,studentId:1,bookId:1,date:addDays(-8),status:'approved',loanId:12},
+    {id:9,studentId:1,bookId:7,date:addDays(-12),status:'approved',loanId:13}
+  ];
+  return {users, books:B, loans, requests};
+}
+let S = (() => { try { const r = JSON.parse(localStorage.getItem(KEY)); if (r && r.users && r.books) return r; } catch (e) {} return seed(); })();
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+save();
+
+/* ============ Helpers de dominio ============ */
+const me = () => { const id = sessionStorage.getItem(SKEY); return S.users.find(u => String(u.id) === id); };
+const bookOf = id => S.books.find(b => b.id === id);
+const userOf = id => S.users.find(u => u.id === id);
+const bTitle = id => bookOf(id)?.title ?? '(libro eliminado)';
+const uName = id => userOf(id)?.name ?? '(usuario)';
+const activeLoans = () => S.loans.filter(l => !l.returned);
+const avail = b => b.total - activeLoans().filter(l => l.bookId === b.id).length;
+const initials = n => n.split(/\s+/).filter(w => w.length > 2).slice(0, 2).map(w => w[0]).join('').toUpperCase() || n[0];
+const uInit = n => n.split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+const reqTag = s => ({pending:tag('warn','Pendiente'), approved:tag('ok','Aprobada'), rejected:tag('bad','Rechazada')}[s]);
+function loanTag(l) {
+  if (l.returned) return tag('gray', 'Devuelto');
+  const d = diffDays(l.due, todayS());
+  if (d < 0) return tag('bad', `Vencido (${-d} d)`);
+  if (d <= 3) return tag('warn', d === 0 ? 'Vence hoy' : `Vence en ${d} d`);
+  return tag('ok', 'Vigente');
+}
+const pwChecks = p => [
+  ['Mínimo 8 caracteres', p.length >= 8], ['Una mayúscula', /[A-Z]/.test(p)], ['Una minúscula', /[a-z]/.test(p)],
+  ['Un número', /\d/.test(p)], ['Un símbolo (#, @, !…)', /[^A-Za-z0-9]/.test(p)]
+];
+const pwList = p => pwChecks(p).map(([t, ok]) => `<li class="${ok ? 'on' : ''}">${t}</li>`).join('');
+const emailOk = e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+
+/* ============ Componentes de interfaz ============ */
+const person = (n, sub) => `<div class="cell"><span class="av">${esc(uInit(n))}</span><div><div class="t-strong">${esc(n)}</div>${sub ? `<div class="sub">${esc(sub)}</div>` : ''}</div></div>`;
+const bookCell = (id, sub) => { const b = bookOf(id); if (!b) return '<span class="muted">(libro eliminado)</span>';
+  return `<div class="cell"><span class="bk" style="--c:${CATCOL[b.cat]}">${esc(initials(b.title))}</span><div><div class="t-strong ttl">${esc(b.title)}</div><div class="sub">${esc(sub ?? b.author)}</div></div></div>`; };
+const emptyState = (icon, title, msg, action = '', sm = false) => `<div class="empty-state ${sm ? 'sm' : ''}"><div class="eico">${ic(icon, 24)}</div><h4>${esc(title)}</h4><p>${esc(msg)}</p>${action}</div>`;
+const emptyRow = (cols, icon, title, msg, action = '') => `<tr class="noh"><td colspan="${cols}" style="padding:0">${emptyState(icon, title, msg, action)}</td></tr>`;
+const panelH = (title, sub = '', actions = '') => `<div class="panel-h"><div><h3>${title}</h3>${sub ? `<p>${sub}</p>` : ''}</div>${actions}</div>`;
+const head = (h, p, actions = '', eyebrow = '') => `<div class="page-head"><div>${eyebrow ? `<div class="eyebrow">${eyebrow}</div>` : ''}<h1>${h}</h1>${p ? `<p>${p}</p>` : ''}</div><div>${actions}</div></div>`;
+function stat(i, label, value, o = {}) {
+  return `<div class="card stat"><div class="stat-top"><span class="stat-l">${label}</span><span class="ico ${o.tone || ''}">${ic(i, 18)}</span></div>
+  <div class="stat-v">${value}${o.unit ? `<small>${o.unit}</small>` : ''}</div>
+  <div class="stat-f">${o.pct !== undefined ? `<div class="bar" role="progressbar" aria-valuenow="${Math.round(o.pct)}" aria-valuemin="0" aria-valuemax="100"><i style="width:${Math.min(100, o.pct)}%"></i></div>` : ''}${o.sub ? `<span class="stat-sub ${o.subTone || ''}">${o.sub}</span>` : ''}</div></div>`;
+}
+const tabsHtml = (k, tabs) => `<div class="tabs" role="tablist">${tabs.map(([v, l, c]) => `<button class="tab ${tabOf(k, tabs[0][0]) === v ? 'on' : ''}" role="tab" aria-selected="${tabOf(k, tabs[0][0]) === v}" data-a="tab" data-k="${k}" data-v="${v}">${l}${c !== undefined ? `<span class="n">${c}</span>` : ''}</button>`).join('')}</div>`;
+
+let modalBtns = [];
+function closeModal() { $('#modal-root').innerHTML = ''; modalBtns = []; }
+function modal({title, body, buttons = [], wide = false}) {
+  closeModal(); modalBtns = buttons;
+  $('#modal-root').innerHTML = `<div class="overlay" data-a="overlay"><div class="modal ${wide ? 'wide' : ''}" role="dialog" aria-modal="true" aria-label="${esc(title)}">
+    <div class="m-head"><h3>${esc(title)}</h3><button class="icon-btn" data-a="close" aria-label="Cerrar">${ic('x')}</button></div>
+    <div class="m-body">${body}</div>
+    <div class="m-foot">${buttons.map((b, i) => `<button class="btn ${b.cls ?? 'btn-ghost'}" data-mi="${i}">${b.label}</button>`).join('')}</div></div></div>`;
+  const f = $('#modal-root input:not([type=hidden]),#modal-root select,#modal-root textarea') || $('#modal-root .m-foot .btn:last-child');
+  if (f) f.focus();
+}
+function confirmBox(title, msg, okLabel, fn, danger = false) {
+  modal({title, body: `<div class="confirm"><div class="c-ico ${danger ? 'danger' : ''}">${ic(danger ? 'alert' : 'info', 22)}</div><p>${msg}</p></div>`, buttons: [{label:'Cancelar'}, {label:okLabel, cls:'btn', fn}]});
+}
+const TT = {ok:['Acción completada','check'], error:['No se pudo completar','alert'], warn:['Aviso','alert'], info:['Información','info']};
+function toast(msg, type = 'ok', title) {
+  const [t, i] = TT[type] || TT.ok;
+  const el = document.createElement('div');
+  el.className = 'toast ' + (type === 'ok' ? '' : type);
+  el.setAttribute('role', 'status');
+  el.innerHTML = `<span class="t-ico">${ic(i, 16)}</span><div class="t-body"><b>${esc(title || t)}</b><p>${esc(msg)}</p></div><button class="icon-btn t-x" data-a="closetoast" aria-label="Cerrar notificación">${ic('x', 16)}</button><i class="t-bar"></i>`;
+  $('#toasts').appendChild(el);
+  setTimeout(() => el.remove(), 4300);
+}
+function field(id, label, {type = 'text', val = '', attrs = '', ph = '', hint = '', req = false} = {}) {
+  return `<div class="field"><label for="${id}">${label}${req ? '<em>*</em>' : ''}</label><input id="${id}" type="${type}" value="${esc(val)}" placeholder="${esc(ph)}" ${attrs}>${hint ? `<div class="hint">${hint}</div>` : ''}<div class="err" id="e-${id}"></div></div>`;
+}
+function selectF(id, label, opts, val = '', first = '', req = true) {
+  return `<div class="field"><label for="${id}">${label}${req ? '<em>*</em>' : ''}</label><select id="${id}">${first ? `<option value="">${first}</option>` : ''}${opts.map(o => `<option value="${esc(o[0])}" ${String(o[0]) === String(val) ? 'selected' : ''}>${esc(o[1])}</option>`).join('')}</select><div class="err" id="e-${id}"></div></div>`;
+}
+function showErrs(errs, ids) {
+  ids.forEach(id => { const e = $('#e-' + id), i = $('#' + id); const m = errs[id] || ''; if (e) e.textContent = m; if (i) i.classList.toggle('invalid', !!m); });
+  const k = Object.keys(errs); if (k.length) $('#' + k[0])?.focus();
+  return k.length === 0;
+}
+const val = id => ($('#' + id)?.value ?? '').trim();
+let flash = null;
+
+/* ============ Rutas y control de acceso (simulado) ============ */
+const ROUTES = {
+  inicio:{title:'Inicio', roles:['student','librarian','admin'], r:pDash},
+  catalogo:{title:'Catálogo', roles:['student'], r:pCatalog},
+  'mis-solicitudes':{title:'Mis solicitudes', roles:['student'], r:pMyReq},
+  solicitudes:{title:'Solicitudes recibidas', roles:['librarian'], r:pReq},
+  prestamos:{title:'Préstamos y devoluciones', roles:['librarian'], r:pLoans},
+  'gestion-catalogo':{title:'Catálogo de libros', roles:['librarian'], r:pBooksMgmt},
+  usuarios:{title:'Gestión de usuarios', roles:['admin'], r:pUsers},
+  estadisticas:{title:'Estadísticas', roles:['admin'], r:pStats}
+};
+const NAV = {
+  student:[['inicio','home','Inicio'],['catalogo','book','Catálogo'],['mis-solicitudes','list','Mis solicitudes']],
+  librarian:[['inicio','home','Panel'],['solicitudes','list','Solicitudes'],['prestamos','undo','Préstamos'],['gestion-catalogo','book','Catálogo de libros']],
+  admin:[['inicio','home','Panel'],['usuarios','users','Usuarios'],['estadisticas','chart','Estadísticas']]
+};
+const LOCKED = {student:['solicitudes','usuarios'], librarian:['usuarios','estadisticas'], admin:['solicitudes','prestamos']};
+const NAVICON = {solicitudes:'list', prestamos:'undo', usuarios:'users', estadisticas:'chart'};
+let cur = 'inicio';
+let ui = {q:'', cat:'', av:'', tab:{}};
+const tabOf = (k, d) => ui.tab[k] ?? d;
+
+function render() {
+  const u = me(), app = $('#app');
+  if (!u || !u.active) { if (u) sessionStorage.removeItem(SKEY); app.innerHTML = viewLogin(); applyTheme(); afterLogin(); return; }
+  const name = location.hash.replace(/^#\/?/, '') || 'inicio';
+  const key = ROUTES[name] ? name : 'inicio', R = ROUTES[key];
+  cur = key;
+  let inner, title = R.title;
+  if (!R.roles.includes(u.role)) { inner = denied(R.title, u); title = 'Acceso denegado'; } else inner = R.r(u);
+  app.innerHTML = shell(u, key, title, inner); applyTheme();
+  if (flash) { const el = document.querySelector(`[data-row="${flash}"]`); flash = null; if (el) { el.classList.add('flash'); el.scrollIntoView?.({block:'nearest'}); } }
+}
+function shell(u, key, title, inner) {
+  const nav = NAV[u.role].map(([k, i, l]) => `<a class="nav ${k === key ? 'active' : ''}" href="#/${k}" ${k === key ? 'aria-current="page"' : ''}>${ic(i)}<span>${l}</span></a>`).join('');
+  const lock = LOCKED[u.role].map(k => `<a class="nav locked" href="#/${k}" title="Sin permiso para tu rol">${ic(NAVICON[k])}<span>${ROUTES[k].title}</span><span class="lk">${ic('lock', 15)}</span></a>`).join('');
+  const dateS = new Date().toLocaleDateString('es-CL', {weekday:'long', day:'numeric', month:'long'});
+  return `<div class="shell"><aside class="side" id="side">
+    <div class="brand"><div class="logo">${ic('lib', 22)}</div><div><b>Biblioteca Digital</b><small>INACAP</small></div></div>
+    <div class="nav-label">Menú</div>${nav}
+    <div class="nav-label">Sin acceso</div>${lock}
+    <div class="side-user"><div class="who2"><div class="avatar">${esc(uInit(u.name))}</div><div><b>${esc(u.name)}</b><small>${ROLE[u.role]}</small></div></div>
+      <button class="btn btn-ghost btn-block" data-a="logout">${ic('logout', 16)} Cerrar sesión</button></div></aside>
+    <div class="scrim" data-a="menu"></div>
+    <main class="main"><header class="top"><button class="icon-btn menu-btn" data-a="menu" aria-label="Abrir menú">${ic('menu', 22)}</button>
+      <nav class="crumb" aria-label="Ruta"><span>Biblioteca Digital</span>${ic('chev', 14)}<b>${esc(title)}</b></nav><div class="grow"></div>
+      <button class="btn btn-ghost btn-sm theme-toggle" data-a="theme" aria-label="Cambiar tema">Modo oscuro</button><span class="chip">${ic('cal', 15)}<span>${esc(dateS)}</span></span>${tag('red', ROLE[u.role])}<div class="avatar" title="${esc(u.name)}">${esc(uInit(u.name))}</div></header>
+    <div class="content" id="content">${inner}</div></main></div>`;
+}
+function denied(page, u) {
+  return `<div class="card denied"><div class="big">${ic('lock', 30)}</div><h1>Acceso denegado</h1>
+  <p>Tu rol (<b>${ROLE[u.role]}</b>) no tiene permiso para acceder a «${esc(page)}». Esta restricción es una simulación visual del prototipo; en producción debe validarse en el servidor.</p>
+  <a class="btn" href="#/inicio">Volver al inicio</a></div>`;
+}
+
+/* ============ Inicio de sesión ============ */
+function lockInfo() { try { return JSON.parse(localStorage.getItem(LKEY)) || {count:0, until:0}; } catch (e) { return {count:0, until:0}; } }
+const setLock = l => { try { localStorage.setItem(LKEY, JSON.stringify(l)); } catch (e) {} };
+let lockTimer = null;
+function viewLogin() {
+  const l = lockInfo(), locked = l.until > Date.now();
+  return `<div class="login"><section class="login-side"><div class="brand"><div class="logo">${ic('lib', 22)}</div><div><b>Biblioteca Digital</b><small>INACAP</small></div></div>
+    <div><h2>La biblioteca institucional, ordenada y a un clic</h2><p class="lead">Catálogo, solicitudes, préstamos y devoluciones para estudiantes, bibliotecarios y administradores.</p>
+    <div class="feat"><div><span>${ic('search')}</span><p><b>Catálogo en tiempo real</b><small>Búsqueda por título, autor y categoría con disponibilidad.</small></p></div>
+    <div><span>${ic('check')}</span><p><b>Solicitudes y préstamos</b><small>Aprobación, entrega y devolución en un mismo flujo.</small></p></div>
+    <div><span>${ic('chart')}</span><p><b>Usuarios y estadísticas</b><small>Roles, cuentas e indicadores de uso.</small></p></div></div></div>
+    <small style="opacity:.7">Prototipo académico · Evaluación 4 · Desarrollo de Proyectos TI</small></section>
+  <section class="login-main"><div class="card login-card"><h1>Iniciar sesión</h1><p class="sub">Accede con tu cuenta institucional.</p>
+    <div id="lock-msg" class="alert warn" ${locked ? '' : 'hidden'}>${ic('clock')}<div></div></div>
+    <div id="form-err" class="alert bad" hidden>${ic('alert')}<div></div></div>
+    <form id="login-form" novalidate>
+      ${field('li-email', 'Correo electrónico', {type:'email', attrs:'autocomplete="username"', ph:'nombre@inacap.cl', req:true})}
+      <div class="field"><label for="li-pass">Contraseña<em>*</em></label><div class="pw-wrap"><input id="li-pass" type="password" autocomplete="current-password" placeholder="Tu contraseña"><button type="button" class="icon-btn" data-a="togglepw" aria-label="Mostrar contraseña" aria-pressed="false">${ic('eye')}</button></div><div class="err" id="e-li-pass"></div></div>
+      <div class="login-links"><span></span><button type="button" class="link-btn" data-a="recover">Recuperar contraseña</button></div>
+      <button class="btn btn-block" id="li-btn" type="submit" style="height:44px">Iniciar sesión</button>
+    </form>
+    <div class="demo-box"><button class="btn btn-ghost btn-block" data-a="theme">Cambiar a modo oscuro / claro</button><button class="btn btn-ghost btn-block" data-a="demo">${ic('key', 16)} Ver credenciales de demostración</button>
+      <button class="btn btn-ghost btn-block" data-a="prod">${ic('shield', 16)} Requisitos de seguridad en producción</button></div>
+    <p class="fine">Las validaciones de este prototipo son una simulación y no constituyen seguridad real.</p></div></section></div>`;
+}
+function afterLogin() {
+  clearInterval(lockTimer);
+  const upd = () => {
+    const l = lockInfo(), left = Math.ceil((l.until - Date.now()) / 1000), box = $('#lock-msg'), btn = $('#li-btn');
+    if (!box) { clearInterval(lockTimer); return; }
+    if (left > 0) { box.hidden = false; box.lastElementChild.textContent = `Demasiados intentos fallidos. Acceso bloqueado temporalmente (simulado). Reintenta en ${left} s.`; btn.disabled = true; }
+    else { box.hidden = true; btn.disabled = false; if (l.until) { setLock({count:0, until:0}); } clearInterval(lockTimer); }
+  };
+  if (lockInfo().until > Date.now()) { upd(); lockTimer = setInterval(upd, 1000); }
+}
+function formErr(msg) { const b = $('#form-err'); if (!b) return; b.hidden = !msg; if (msg) b.lastElementChild.textContent = msg; }
+function doLogin() {
+  const email = val('li-email'), pass = $('#li-pass').value, errs = {};
+  formErr('');
+  if (!email) errs['li-email'] = 'Ingresa tu correo electrónico.'; else if (!emailOk(email)) errs['li-email'] = 'El formato del correo no es válido.';
+  if (!pass) errs['li-pass'] = 'Ingresa tu contraseña.';
+  if (!showErrs(errs, ['li-email', 'li-pass'])) return;
+  let l = lockInfo();
+  if (l.until > Date.now()) { afterLogin(); return; }
+  const u = S.users.find(x => x.email.toLowerCase() === email.toLowerCase());
+  if (!u || u.pass !== pass) {
+    l = {count:(l.count || 0) + 1, until:0};
+    if (l.count >= MAX_FAILS) { l.until = Date.now() + LOCK_SECONDS * 1000; setLock(l); formErr(''); afterLogin(); return; }
+    setLock(l);
+    formErr(`Correo o contraseña incorrectos. Intentos restantes: ${MAX_FAILS - l.count}.`);
+    return;
+  }
+  if (!u.active) { formErr('Tu cuenta está desactivada. Contacta al administrador.'); return; }
+  setLock({count:0, until:0});
+  sessionStorage.setItem(SKEY, u.id);
+  location.hash = '#/inicio';
+  render();
+  toast(`Bienvenido/a, ${u.name.split(' ')[0]}.`, 'ok', 'Sesión iniciada');
+}
+
+/* ============ Panel de inicio por rol ============ */
+function pDash(u) { return {student:dashStudent, librarian:dashLibrarian, admin:dashAdmin}[u.role](u); }
+function dashStudent(u) {
+  const mine = activeLoans().filter(l => l.studentId === u.id).sort((a, b) => a.due.localeCompare(b.due));
+  const pend = S.requests.filter(r => r.studentId === u.id && r.status === 'pending').length;
+  const free = S.books.filter(b => avail(b) > 0).length;
+  const soon = mine.filter(l => diffDays(l.due, todayS()) <= 3).length;
+  const rows = mine.map(l => `<tr><td>${bookCell(l.bookId)}</td><td>${fmt(l.from)}</td><td>${fmt(l.due)}</td><td>${loanTag(l)}</td></tr>`).join('');
+  const next = mine[0];
+  return head(`Hola, ${esc(u.name.split(' ')[0])}`, 'Este es el resumen de tu actividad en la biblioteca.', '', 'Panel del estudiante') +
+  `<div class="grid g3 mb">${stat('book','Préstamos activos',mine.length,{sub: soon ? `${soon} por vencer pronto` : 'Sin vencimientos próximos', subTone: soon ? 'warn' : 'ok'})}
+  ${stat('clock','Reservas pendientes',pend,{tone:'warn', sub: pend ? 'En revisión por la biblioteca' : 'Sin solicitudes en curso'})}
+  ${stat('check','Títulos disponibles',free,{tone:'ok', unit:`de ${S.books.length}`, pct: free / S.books.length * 100, sub:'Listos para solicitar'})}</div>
+  <div class="grid g21"><div class="card panel">${panelH('Mis préstamos activos', 'Libros que tienes actualmente', '<a class="btn btn-ghost btn-sm" href="#/mis-solicitudes">Ver solicitudes</a>')}
+    <div class="tbl-wrap"><table><thead><tr><th>Libro</th><th>Retiro</th><th>Vence</th><th>Estado</th></tr></thead><tbody>${rows || emptyRow(4, 'book', 'Sin préstamos activos', 'Cuando se apruebe una solicitud, el libro aparecerá aquí.', '<a class="btn btn-sm" href="#/catalogo">Explorar catálogo</a>')}</tbody></table></div></div>
+  <div class="stack"><div class="card cta"><span class="ico">${ic('search', 22)}</span><div><h3>Explora el catálogo</h3><p>Busca por título o autor y solicita tu próximo libro.</p></div><a class="btn" href="#/catalogo">Ir al catálogo ${ic('arrow', 16)}</a></div>
+  <div class="card panel">${panelH('Próxima devolución')}<div class="panel-b">${next ? `${bookCell(next.bookId, 'Vence el ' + fmt(next.due))}<div style="margin-top:14px">${loanTag(next)}</div>` : emptyState('check', 'Todo al día', 'No tienes devoluciones próximas.', '', true)}</div></div></div></div>`;
+}
+function dashLibrarian() {
+  const pend = S.requests.filter(r => r.status === 'pending');
+  const act = activeLoans().sort((a, b) => a.due.localeCompare(b.due));
+  const month = todayS().slice(0, 7), over = act.filter(l => l.due < todayS()).length;
+  const ret = S.loans.filter(l => l.returned && l.returned.slice(0, 7) === month).length;
+  const free = S.books.filter(b => avail(b) > 0).length;
+  const pr = pend.slice(0, 4).map(r => `<tr><td>${bookCell(r.bookId, uName(r.studentId) + ' · ' + fmt(r.date))}</td><td><div class="acts" style="justify-content:flex-end"><button class="btn btn-sm" data-a="approve" data-id="${r.id}">Aprobar</button><button class="btn btn-danger btn-sm" data-a="reject" data-id="${r.id}">Rechazar</button></div></td></tr>`).join('');
+  const ar = act.slice(0, 4).map(l => `<tr><td>${bookCell(l.bookId, uName(l.studentId) + ' · vence ' + fmt(l.due))}</td><td>${loanTag(l)}</td><td class="r"><button class="btn btn-ghost btn-sm" data-a="return" data-id="${l.id}">Devolver</button></td></tr>`).join('');
+  return head('Panel del bibliotecario', 'Gestiona solicitudes, préstamos y el catálogo.', '', 'Panel de gestión') +
+  `<div class="grid g4 mb">${stat('list','Solicitudes pendientes',pend.length,{tone:'warn', sub: pend.length ? 'Requieren revisión' : 'Sin pendientes', subTone: pend.length ? 'warn' : 'ok'})}
+  ${stat('book','Préstamos activos',act.length,{sub: over ? `${over} vencido${over > 1 ? 's' : ''}` : 'Ninguno vencido', subTone: over ? 'bad' : 'ok'})}
+  ${stat('undo','Devoluciones del mes',ret,{tone:'ok', sub:`${S.loans.filter(l => l.returned).length} en el historial`})}
+  ${stat('lib','Libros en catálogo',S.books.length,{tone:'gray', pct: free / S.books.length * 100, sub:`${free} títulos con stock`})}</div>
+  <div class="grid g2"><div class="card panel">${panelH('Solicitudes pendientes', 'Las más recientes', '<a class="btn btn-ghost btn-sm" href="#/solicitudes">Ver todas</a>')}<div class="tbl-wrap"><table style="min-width:0"><tbody>${pr || emptyRow(2, 'check', 'Todo al día', 'No hay solicitudes pendientes de revisión.')}</tbody></table></div></div>
+  <div class="card panel">${panelH('Próximas devoluciones', 'Ordenadas por vencimiento', '<a class="btn btn-ghost btn-sm" href="#/prestamos">Ver préstamos</a>')}<div class="tbl-wrap"><table style="min-width:0"><tbody>${ar || emptyRow(3, 'book', 'Sin préstamos activos', 'Los préstamos registrados aparecerán aquí.')}</tbody></table></div></div></div>`;
+}
+function dashAdmin() {
+  const act = activeLoans(), copies = S.books.reduce((a, b) => a + b.total, 0), free = copies - act.length;
+  const over = act.filter(l => l.due < todayS()).length, pend = S.requests.filter(r => r.status === 'pending').length;
+  const au = S.users.filter(u => u.active).length, fb = S.books.filter(b => avail(b) > 0).length;
+  const meter = (l, v, t, c) => `<div class="meter"><div class="top2"><span>${l}</span><b>${v}</b></div><div class="tr"><div class="fl" style="width:${t}%;${c ? 'background:' + c : ''}"></div></div></div>`;
+  return head('Panel del administrador', 'Indicadores generales de la plataforma.', '', 'Visión general') +
+  `<div class="grid g4 mb">${stat('users','Usuarios registrados',S.users.length,{pct: au / S.users.length * 100, sub:`${au} cuentas activas`})}
+  ${stat('book','Libros disponibles',fb,{tone:'ok', unit:`de ${S.books.length} títulos`, sub:`${free} de ${copies} ejemplares libres`, subTone:'ok'})}
+  ${stat('undo','Préstamos activos',act.length,{tone:'gray', sub: over ? `${over} vencido${over > 1 ? 's' : ''}` : 'Ninguno vencido', subTone: over ? 'bad' : 'ok'})}
+  ${stat('list','Solicitudes pendientes',pend,{tone:'warn', sub: pend ? 'Esperando al bibliotecario' : 'Sin pendientes', subTone: pend ? 'warn' : 'ok'})}</div>
+  <div class="grid g21"><div class="card panel">${panelH('Indicadores generales', 'Estado actual de la biblioteca')}<div class="panel-b">
+    ${meter('Ejemplares disponibles', `${free} de ${copies}`, Math.round(free / copies * 100), '#2F6F4F')}
+    ${meter('Cuentas activas', `${au} de ${S.users.length}`, Math.round(au / S.users.length * 100))}
+    ${meter('Préstamos vencidos', `${over} de ${act.length}`, act.length ? Math.round(over / act.length * 100) : 0, '#B42318')}</div></div>
+  <div class="card panel">${panelH('Accesos rápidos')}<div class="panel-b stack">
+    <a class="qa" href="#/usuarios"><span class="ico">${ic('users', 16)}</span>Gestionar usuarios${ic('chev', 16)}</a>
+    <a class="qa" href="#/estadisticas"><span class="ico gray">${ic('chart', 16)}</span>Ver estadísticas${ic('chev', 16)}</a>
+    <button class="qa" data-a="prod"><span class="ico info">${ic('shield', 16)}</span>Requisitos de seguridad en producción${ic('chev', 16)}</button></div></div></div>`;
+}
+
+/* ============ Estudiante: catálogo, detalle, solicitudes ============ */
+function pCatalog() {
+  return head('Catálogo de libros', 'Busca por título o autor y solicita los libros disponibles.', '', 'Catálogo') +
+  `<div class="toolbar"><div class="search"><span aria-hidden="true">${ic('search', 18)}</span><input class="input" data-in="q" value="${esc(ui.q)}" placeholder="Buscar por título o autor" aria-label="Buscar libros"></div>
+  <select class="input" data-in="cat" aria-label="Categoría"><option value="">Todas las categorías</option>${CATS.map(c => `<option ${ui.cat === c ? 'selected' : ''}>${c}</option>`).join('')}</select>
+  <select class="input" data-in="av" aria-label="Disponibilidad"><option value="">Toda disponibilidad</option><option value="1" ${ui.av === '1' ? 'selected' : ''}>Solo disponibles</option></select></div>
+  <div id="live" class="books">${gridHtml()}</div>`;
+}
+function filteredBooks() {
+  const q = ui.q.toLowerCase().trim();
+  return S.books.filter(b => (!q || b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q)) && (!ui.cat || b.cat === ui.cat) && (!ui.av || avail(b) > 0));
+}
+const clearBtn = '<button class="btn btn-ghost" data-a="clearfilters">Limpiar filtros</button>';
+function gridHtml() {
+  const list = filteredBooks(), u = me();
+  if (!list.length) return `<div class="card" style="grid-column:1/-1">${emptyState('search', 'Sin resultados', 'No encontramos libros con esos criterios. Prueba con otro título, autor o categoría.', clearBtn)}</div>`;
+  return list.map(b => { const a = avail(b);
+    const loaned = u && activeLoans().some(l => l.studentId === u.id && l.bookId === b.id);
+    const asked = u && S.requests.some(r => r.studentId === u.id && r.bookId === b.id && r.status === 'pending');
+    const lbl = loaned ? 'En tu poder' : asked ? 'Solicitado' : 'Solicitar';
+    return `<article class="card book"><div class="cover" style="--c:${CATCOL[b.cat]}">${esc(initials(b.title))}</div><div class="b-body"><span class="cat">${esc(b.cat)}</span><h3>${esc(b.title)}</h3><p class="muted">${esc(b.author)}</p>
+    <div class="b-foot">${a > 0 ? tag('ok', `${a} disponible${a > 1 ? 's' : ''}`) : tag('bad', 'No disponible')}</div>
+    <div class="b-actions"><button class="btn btn-ghost btn-sm" data-a="detail" data-id="${b.id}">Ver detalle</button><button class="btn btn-sm" data-a="request" data-id="${b.id}" ${a > 0 && !loaned && !asked ? '' : 'disabled'}>${lbl}</button></div></div></article>`; }).join('');
+}
+function showDetail(id) {
+  const b = bookOf(id), a = avail(b);
+  modal({title: b.title, wide: true, body: `<div class="cover detail-cover" style="--c:${CATCOL[b.cat]}">${esc(initials(b.title))}</div>
+    <p>${esc(b.desc)}</p><dl class="kv"><dt>Autor(es)</dt><dd>${esc(b.author)}</dd><dt>Categoría</dt><dd>${esc(b.cat)}</dd><dt>Año</dt><dd>${b.year}</dd><dt>Código</dt><dd>${esc(b.code)}</dd><dt>Ejemplares</dt><dd>${b.total} en total</dd><dt>Disponibilidad</dt><dd>${a > 0 ? tag('ok', `${a} disponible${a > 1 ? 's' : ''}`) : tag('bad', 'No disponible')}</dd></dl>`,
+    buttons: [{label:'Cerrar'}, ...(a > 0 ? [{label:'Solicitar este libro', cls:'btn', fn:() => { setTimeout(() => askRequest(id), 0); }}] : [])]});
+}
+function askRequest(id) {
+  const u = me(), b = bookOf(id);
+  if (!u || u.role !== 'student' || !b) return toast('Operación no disponible para este perfil.', 'error');
+  if (S.requests.some(r => r.studentId === u.id && r.bookId === id && r.status === 'pending')) return toast('Ya tienes una solicitud pendiente para este libro.', 'error');
+  if (activeLoans().some(l => l.studentId === u.id && l.bookId === id)) return toast('Ya tienes este libro en préstamo.', 'error');
+  if (avail(b) <= 0) return toast('No hay ejemplares disponibles.', 'error');
+  confirmBox('Confirmar solicitud', `¿Deseas solicitar <b>${esc(b.title)}</b>? El bibliotecario revisará tu solicitud y podrás ver su estado en «Mis solicitudes».`, 'Confirmar solicitud', () => {
+    S.requests.push({id:nid(S.requests), studentId:u.id, bookId:id, date:todayS(), status:'pending'});
+    save(); render(); toast(`«${b.title}» quedó pendiente de aprobación.`, 'ok', 'Solicitud enviada');
+  });
+}
+function pMyReq(u) {
+  const mine = S.requests.filter(r => r.studentId === u.id).sort((a, b) => b.id - a.id);
+  const c = s => mine.filter(r => r.status === s).length;
+  const t = tabOf('my', 'all'), list = t === 'all' ? mine : mine.filter(r => r.status === t);
+  const rows = list.map(r => `<tr data-row="myreq-${r.id}"><td>${bookCell(r.bookId)}</td><td>${fmt(r.date)}${r.origin === 'presencial' ? '<br><span class="tag info">Presencial</span>' : ''}</td><td>${reqTag(r.status)}</td><td>${r.status === 'pending' ? `<button class="btn btn-danger btn-sm" data-a="cancelreq" data-id="${r.id}">Cancelar</button>` : '<span class="muted">—</span>'}</td></tr>`).join('');
+  const emp = t === 'all' ? emptyRow(4, 'inbox', 'Aún no has hecho solicitudes', 'Explora el catálogo y solicita tu primer libro.', '<a class="btn btn-sm" href="#/catalogo">Ir al catálogo</a>') : emptyRow(4, 'inbox', 'Nada por aquí', 'No tienes solicitudes en este estado.');
+  return head('Mis solicitudes', 'Consulta el estado de los libros que has solicitado.', '<a class="btn" href="#/catalogo">' + ic('plus', 16) + ' Nueva solicitud</a>', 'Solicitudes') +
+  tabsHtml('my', [['all','Todas',mine.length],['pending','Pendientes',c('pending')],['approved','Aprobadas',c('approved')],['rejected','Rechazadas',c('rejected')]]) +
+  `<div class="card panel"><div class="tbl-wrap"><table><thead><tr><th>Libro</th><th>Fecha</th><th>Estado</th><th>Acción</th></tr></thead><tbody>${rows || emp}</tbody></table></div></div>`;
+}
+
+/* ============ Bibliotecario ============ */
+function pReq() {
+  const all = [...S.requests].sort((a, b) => b.id - a.id), c = s => all.filter(r => r.status === s).length;
+  const t = tabOf('req', 'pending'), list = t === 'all' ? all : all.filter(r => r.status === t);
+  const rows = list.map(r => `<tr data-row="req-${r.id}"><td>${person(uName(r.studentId), userOf(r.studentId)?.email)}</td><td>${bookCell(r.bookId)}</td><td>${fmt(r.date)}${r.origin === 'presencial' ? '<br><span class="tag info">Presencial</span>' : ''}</td><td>${reqTag(r.status)}</td>
+    <td>${r.status === 'pending' ? `<div class="acts"><button class="btn btn-sm" data-a="approve" data-id="${r.id}">Aprobar</button><button class="btn btn-danger btn-sm" data-a="reject" data-id="${r.id}">Rechazar</button></div>` : '<span class="muted">Sin acciones</span>'}</td></tr>`).join('');
+  const emp = t === 'pending' ? emptyRow(5, 'check', 'Todo al día', 'No hay solicitudes pendientes de revisión.') : emptyRow(5, 'inbox', 'Sin registros', 'No hay solicitudes en esta categoría.');
+  return head('Solicitudes de estudiantes', 'Gestiona solicitudes digitales y presenciales.', `<button class="btn" data-a="walkin">${ic('plus', 16)} Solicitud presencial</button>`, 'Gestión') +
+  tabsHtml('req', [['pending','Pendientes',c('pending')],['approved','Aprobadas',c('approved')],['rejected','Rechazadas',c('rejected')],['all','Todas',all.length]]) +
+  `<div class="card panel"><div class="tbl-wrap"><table><thead><tr><th>Estudiante</th><th>Libro</th><th>Fecha</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>${rows || emp}</tbody></table></div></div>`;
+}
+function walkInForm() {
+  if (me()?.role !== 'librarian') return toast('Acción restringida al bibliotecario.', 'error');
+  const studs = S.users.filter(u => u.role === 'student' && u.active).map(u => [u.id, `${u.name} · ${u.email}`]);
+  const books = S.books.filter(b => avail(b) > 0).map(b => [b.id, `${b.title} (${avail(b)} disponibles)`]);
+  modal({title:'Solicitud presencial', wide:true, body:
+    `<p class="muted" style="margin-bottom:18px">Registra la petición de un estudiante que acude a la biblioteca. Puedes dejarla pendiente o aprobarla y entregar el libro inmediatamente.</p>` +
+    selectF('wi-stu','Estudiante',studs,'','Selecciona un estudiante') +
+    selectF('wi-book','Libro disponible',books,'','Selecciona un libro') +
+    selectF('wi-action','Acción', [['approved','Aprobar y registrar préstamo ahora'],['pending','Guardar solicitud pendiente']], 'approved') +
+    `<div class="alert info" style="margin:0">${ic('info',16)}<div>Al aprobar, el préstamo se registra por ${LOAN_DAYS} días y se descuenta un ejemplar disponible.</div></div>`,
+    buttons:[{label:'Cancelar'}, {label:'Guardar solicitud',cls:'btn',fn:() => {
+      const sid = +val('wi-stu'), bid = +val('wi-book'), action = val('wi-action');
+      const errs = {};
+      if (!sid || !S.users.some(u => u.id === sid && u.role === 'student' && u.active)) errs['wi-stu']='Selecciona un estudiante activo.';
+      if (!bid || !bookOf(bid) || avail(bookOf(bid)) <= 0) errs['wi-book']='Selecciona un libro disponible.';
+      if (!showErrs(errs,['wi-stu','wi-book','wi-action'])) return false;
+      if (activeLoans().some(l => l.studentId === sid && l.bookId === bid)) {showErrs({'wi-book':'El estudiante ya tiene este libro en préstamo.'},['wi-stu','wi-book','wi-action']);return false;}
+      if (S.requests.some(r => r.studentId === sid && r.bookId === bid && r.status === 'pending')) {showErrs({'wi-book':'Ya existe una solicitud pendiente para este libro.'},['wi-stu','wi-book','wi-action']);return false;}
+      const req = {id:nid(S.requests),studentId:sid,bookId:bid,date:todayS(),status:action,origin:'presencial'};
+      if (action === 'approved') {
+        const loan = {id:nid(S.loans),studentId:sid,bookId:bid,from:todayS(),due:addDays(LOAN_DAYS),returned:null};
+        S.loans.push(loan);req.loanId=loan.id;
+      }
+      S.requests.push(req);save();ui.tab.req=action;flash='req-'+req.id;render();
+      toast(action === 'approved' ? 'Solicitud presencial aprobada y préstamo registrado.' : 'Solicitud presencial registrada como pendiente.','ok', 'Registro presencial');
+    }}]});
+}
+function pLoans() {
+  const act = activeLoans().sort((a, b) => a.due.localeCompare(b.due)), hist = S.loans.filter(l => l.returned).sort((a, b) => b.returned.localeCompare(a.returned));
+  const t = tabOf('loan', 'active');
+  const body = t === 'active'
+    ? `<thead><tr><th>Estudiante</th><th>Libro</th><th>Retiro</th><th>Vencimiento</th><th>Estado</th><th>Acción</th></tr></thead><tbody>${act.map(l => `<tr data-row="loan-${l.id}"><td>${person(uName(l.studentId))}</td><td>${bookCell(l.bookId)}</td><td>${fmt(l.from)}</td><td>${fmt(l.due)}</td><td>${loanTag(l)}</td><td><button class="btn btn-ghost btn-sm" data-a="return" data-id="${l.id}">${ic('undo', 14)} Devolución</button></td></tr>`).join('') || emptyRow(6, 'book', 'Sin préstamos activos', 'Registra un préstamo para verlo aquí.', `<button class="btn btn-sm" data-a="newloan">${ic('plus', 14)} Registrar préstamo</button>`)}</tbody>`
+    : `<thead><tr><th>Estudiante</th><th>Libro</th><th>Retiro</th><th>Devolución</th><th>Duración</th><th>Estado</th></tr></thead><tbody>${hist.map(l => `<tr data-row="loan-${l.id}"><td>${person(uName(l.studentId))}</td><td>${bookCell(l.bookId)}</td><td>${fmt(l.from)}</td><td>${fmt(l.returned)}</td><td>${diffDays(l.returned, l.from)} días</td><td>${l.returned > l.due ? tag('warn', 'Con atraso') : tag('ok', 'A tiempo')}</td></tr>`).join('') || emptyRow(6, 'inbox', 'Sin historial', 'Las devoluciones registradas aparecerán aquí.')}</tbody>`;
+  return head('Préstamos y devoluciones', 'Registra préstamos, devoluciones y consulta el historial.', `<button class="btn" data-a="newloan">${ic('plus', 16)} Registrar préstamo</button>`, 'Gestión') +
+  tabsHtml('loan', [['active','Préstamos activos',act.length],['history','Historial de devoluciones',hist.length]]) +
+  `<div class="card panel"><div class="tbl-wrap"><table>${body}</table></div></div>`;
+}
+function loanForm() {
+  const studs = S.users.filter(u => u.role === 'student' && u.active).map(u => [u.id, u.name]);
+  const books = S.books.filter(b => avail(b) > 0).map(b => [b.id, `${b.title} (${avail(b)} disp.)`]);
+  modal({title:'Registrar préstamo', body: selectF('ln-stu','Estudiante',studs,'','Selecciona un estudiante') + selectF('ln-book','Libro disponible',books,'','Selecciona un libro') + `<div class="alert info" style="margin:0">${ic('info', 16)}<div>El plazo de préstamo es de ${LOAN_DAYS} días desde hoy.</div></div>`,
+    buttons:[{label:'Cancelar'}, {label:'Registrar préstamo', cls:'btn', fn:() => {
+      const errs = {}; if (!val('ln-stu')) errs['ln-stu'] = 'Selecciona un estudiante.'; if (!val('ln-book')) errs['ln-book'] = 'Selecciona un libro.';
+      if (!showErrs(errs, ['ln-stu','ln-book'])) return false;
+      const sid = +val('ln-stu'), bid = +val('ln-book');
+      if (activeLoans().some(l => l.studentId === sid && l.bookId === bid)) { showErrs({'ln-book':'El estudiante ya tiene este libro en préstamo.'}, ['ln-stu','ln-book']); return false; }
+      const loan = {id:nid(S.loans), studentId:sid, bookId:bid, from:todayS(), due:addDays(LOAN_DAYS), returned:null};
+      S.loans.push(loan); ui.tab.loan = 'active'; flash = 'loan-' + loan.id;
+      save(); render(); toast(`${uName(sid)} · ${bTitle(bid)}`, 'ok', 'Préstamo registrado');
+    }}]});
+}
+function pBooksMgmt() {
+  return head('Catálogo de libros', 'Visualiza, agrega y edita los libros registrados.', `<button class="btn" data-a="newbook">${ic('plus', 16)} Agregar libro</button>`, 'Gestión') +
+  `<div class="toolbar"><div class="search"><span aria-hidden="true">${ic('search', 18)}</span><input class="input" data-in="q" value="${esc(ui.q)}" placeholder="Buscar por título o autor" aria-label="Buscar"></div>
+  <select class="input" data-in="cat" aria-label="Categoría"><option value="">Todas las categorías</option>${CATS.map(c => `<option ${ui.cat === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
+  <div class="card panel"><div class="tbl-wrap"><table><thead><tr><th>Libro</th><th>Código</th><th>Categoría</th><th class="r">Ejemplares</th><th>Disponibles</th><th>Acción</th></tr></thead><tbody id="live">${bookRows()}</tbody></table></div></div>`;
+}
+function bookRows() {
+  const list = filteredBooks();
+  return list.map(b => { const a = avail(b);
+    return `<tr data-row="book-${b.id}"><td>${bookCell(b.id)}</td><td class="muted">${esc(b.code)}</td><td>${tag('red', esc(b.cat))}</td><td class="r">${b.total}</td><td>${a > 0 ? tag('ok', a) : tag('bad', '0')}</td><td><button class="btn btn-ghost btn-sm" data-a="editbook" data-id="${b.id}">${ic('edit', 14)} Editar</button></td></tr>`; }).join('')
+    || emptyRow(6, 'search', 'Sin resultados', 'No encontramos libros con esos criterios.', clearBtn);
+}
+function bookForm(id) {
+  const b = id ? bookOf(id) : null, ids = ['bk-title','bk-author','bk-cat','bk-year','bk-copies','bk-desc'];
+  modal({title: b ? 'Editar libro' : 'Agregar libro', wide:true, body:
+    field('bk-title','Título',{val:b?.title, req:true}) + field('bk-author','Autor(es)',{val:b?.author, req:true}) +
+    `<div class="row2">${selectF('bk-cat','Categoría',CATS.map(c => [c, c]),b?.cat,'Selecciona…')}${field('bk-year','Año de edición',{type:'number',val:b?.year ?? '',attrs:'min="1900" max="2100"', req:true})}</div>` +
+    field('bk-copies','Cantidad de ejemplares',{type:'number',val:b?.total ?? 1,attrs:'min="1" max="99"', req:true, hint:'Entre 1 y 99 ejemplares.'}) +
+    `<div class="field"><label for="bk-desc">Descripción</label><textarea id="bk-desc" maxlength="200" placeholder="Opcional, hasta 200 caracteres">${esc(b?.desc ?? '')}</textarea><div class="err" id="e-bk-desc"></div></div>`,
+    buttons:[{label:'Cancelar'}, {label: b ? 'Guardar cambios' : 'Agregar libro', cls:'btn', fn:() => {
+      const errs = {}, t = val('bk-title'), a = val('bk-author'), c = val('bk-cat'), y = +val('bk-year'), n = +val('bk-copies');
+      if (t.length < 2) errs['bk-title'] = 'Ingresa el título del libro.';
+      if (a.length < 2) errs['bk-author'] = 'Ingresa el autor.';
+      if (!c) errs['bk-cat'] = 'Selecciona una categoría.';
+      if (!Number.isInteger(y) || y < 1900 || y > 2100) errs['bk-year'] = 'Ingresa un año entre 1900 y 2100.';
+      if (!Number.isInteger(n) || n < 1 || n > 99) errs['bk-copies'] = 'Ingresa un número entre 1 y 99.';
+      else if (b && n < b.total - avail(b)) errs['bk-copies'] = `Hay ${b.total - avail(b)} ejemplares en préstamo; no puedes tener menos.`;
+      if (!showErrs(errs, ids)) return false;
+      if (b) { Object.assign(b, {title:t, author:a, cat:c, year:y, total:n, desc:val('bk-desc')}); flash = 'book-' + b.id; toast(`«${t}» se actualizó correctamente.`, 'ok', 'Cambios guardados'); }
+      else { const n2 = nid(S.books); S.books.push({id:n2, code:'BDI-' + String(n2).padStart(3, '0'), title:t, author:a, cat:c, year:y, total:n, desc:val('bk-desc') || 'Sin descripción.'}); ui.q = ''; ui.cat = ''; flash = 'book-' + n2; toast(`«${t}» ya forma parte del catálogo.`, 'ok', 'Libro agregado'); }
+      save(); render();
+    }}]});
+}
+
+/* ============ Administrador ============ */
+function pUsers() {
+  const rows = S.users.map(u => `<tr data-row="user-${u.id}"><td>${person(u.name, u.email)}</td>
+    <td><select class="select-sm" data-ch="role" data-id="${u.id}" aria-label="Rol de ${esc(u.name)}">${Object.entries(ROLE).map(([k, l]) => `<option value="${k}" ${u.role === k ? 'selected' : ''}>${l}</option>`).join('')}</select></td>
+    <td>${u.active ? tag('ok', 'Activa') : tag('gray', 'Inactiva')}</td>
+    <td><div class="acts"><button class="btn btn-ghost btn-sm" data-a="toggleuser" data-id="${u.id}">${u.active ? 'Desactivar' : 'Activar'}</button><button class="btn btn-ghost btn-sm" data-a="resetpw" data-id="${u.id}">${ic('key', 14)} Restablecer</button></div></td></tr>`).join('');
+  return head('Gestión de usuarios', 'Crea cuentas, asigna roles y controla su estado.', `<button class="btn" data-a="newuser">${ic('plus', 16)} Crear usuario</button>`, 'Administración') +
+  `<div class="card panel">${panelH('Usuarios registrados', `${S.users.length} cuentas · ${S.users.filter(u => u.active).length} activas`)}<div class="tbl-wrap"><table><thead><tr><th>Usuario</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+}
+function userForm() {
+  const ids = ['nu-name','nu-email','nu-role','nu-pass'];
+  modal({title:'Crear usuario', body:
+    field('nu-name','Nombre completo',{req:true, ph:'Nombre y apellido'}) + field('nu-email','Correo electrónico',{type:'email',ph:'nombre@inacap.cl', req:true}) +
+    selectF('nu-role','Rol',Object.entries(ROLE),'','Selecciona un rol') +
+    `<div class="field"><label for="nu-pass">Contraseña inicial<em>*</em></label><input id="nu-pass" type="text" autocomplete="off" placeholder="Crea una contraseña segura"><div class="err" id="e-nu-pass"></div><ul class="rules" id="pw-list">${pwList('')}</ul></div>`,
+    buttons:[{label:'Cancelar'}, {label:'Crear usuario', cls:'btn', fn:() => {
+      const errs = {}, n = val('nu-name'), e = val('nu-email'), r = val('nu-role'), p = $('#nu-pass').value;
+      if (n.length < 3) errs['nu-name'] = 'Ingresa el nombre completo.';
+      if (!e) errs['nu-email'] = 'Ingresa el correo electrónico.'; else if (!emailOk(e)) errs['nu-email'] = 'El formato del correo no es válido.';
+      else if (S.users.some(u => u.email.toLowerCase() === e.toLowerCase())) errs['nu-email'] = 'Ya existe una cuenta con ese correo.';
+      if (!r) errs['nu-role'] = 'Selecciona un rol.';
+      if (!pwChecks(p).every(c => c[1])) errs['nu-pass'] = 'La contraseña no cumple los requisitos mínimos.';
+      if (!showErrs(errs, ids)) return false;
+      const id = nid(S.users);
+      S.users.push({id, name:n, email:e, pass:p, role:r, active:true});
+      flash = 'user-' + id; save(); render(); toast(`${n} fue creado con el rol ${ROLE[r]}.`, 'ok', 'Usuario creado');
+    }}]});
+}
+function pStats() {
+  const now = new Date(), mon = [];
+  for (let i = 5; i >= 0; i--) { const d = new Date(now.getFullYear(), now.getMonth() - i, 1); mon.push({k:`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`, label:MONTHS[d.getMonth()]}); }
+  const perMonth = mon.map(m => ({label:m.label, v:S.loans.filter(l => l.from.slice(0, 7) === m.k).length}));
+  const demand = {}; S.loans.forEach(l => demand[l.bookId] = (demand[l.bookId] || 0) + 1);
+  S.requests.filter(r => r.status !== 'approved').forEach(r => demand[r.bookId] = (demand[r.bookId] || 0) + 1);
+  const top = Object.entries(demand).sort((a, b) => b[1] - a[1]).slice(0, 5), topMax = top[0]?.[1] || 1;
+  const roles = [['student','#C8102E'],['librarian','#344054'],['admin','#D0D5DD']].map(([k, c]) => ({k, c, v:S.users.filter(u => u.role === k).length}));
+  const totU = S.users.length || 1, pend = S.requests.filter(r => r.status === 'pending').length;
+  const thisM = perMonth[perMonth.length - 1].v, au = S.users.filter(u => u.active).length;
+  return head('Estadísticas', 'Resumen de actividad de la biblioteca.', '', 'Indicadores') +
+  `<div class="grid g4 mb">${stat('book','Préstamos totales',S.loans.length,{sub:`${thisM} en el mes actual`})}
+  ${stat('undo','Préstamos activos',activeLoans().length,{tone:'gray', sub:`${S.loans.filter(l => l.returned).length} devueltos`})}
+  ${stat('list','Solicitudes pendientes',pend,{tone:'warn', sub: pend ? 'Esperando revisión' : 'Sin pendientes', subTone: pend ? 'warn' : 'ok'})}
+  ${stat('users','Usuarios activos',au,{tone:'ok', unit:`de ${S.users.length}`, pct: au / totU * 100})}</div>
+  <div class="grid g2 mb"><div class="card panel">${panelH('Préstamos por mes', 'Últimos 6 meses')}<div class="panel-b bars">${bars(perMonth)}</div></div>
+  <div class="card panel">${panelH('Libros más solicitados', 'Préstamos y solicitudes no aprobadas por título')}<div class="panel-b">${top.length ? top.map(([id, n], i) => `<div class="hbar"><span class="rk">${i + 1}</span><span class="nm" title="${esc(bTitle(+id))}">${esc(bTitle(+id))}</span><div class="tr"><div class="fl" style="width:${n / topMax * 100}%"></div></div><b>${n}</b></div>`).join('') : emptyState('chart', 'Sin datos todavía', 'Aparecerán cuando existan solicitudes o préstamos.', '', true)}</div></div></div>
+  <div class="grid g2"><div class="card panel">${panelH('Distribución de usuarios por rol', `${S.users.length} usuarios registrados`)}<div class="panel-b"><div class="donut-row">${donut(roles)}<div class="legend">${roles.map(r => `<div><i style="background:${r.c}"></i>${ROLE[r.k]}<b>${r.v}</b><small>${Math.round(r.v / totU * 100)}%</small></div>`).join('')}</div></div></div></div>
+  <div class="card panel">${panelH('Estado de las solicitudes', `${S.requests.length} solicitudes en total`)}<div class="panel-b">${['pending','approved','rejected'].map(s => { const n = S.requests.filter(r => r.status === s).length; return `<div class="meter"><div class="top2"><span>${reqTag(s)}</span><b>${n}</b></div><div class="tr"><div class="fl" style="width:${S.requests.length ? n / S.requests.length * 100 : 0}%;background:${{pending:'#B54708', approved:'#067647', rejected:'#B42318'}[s]}"></div></div></div>`; }).join('')}</div></div></div>`;
+}
+function bars(data) {
+  const W = 560, H = 230, pl = 30, pb = 30, pt = 24, max = Math.max(4, ...data.map(d => d.v)), ch = H - pb - pt, bw = (W - pl) / data.length;
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Préstamos por mes">`;
+  for (let i = 0; i <= 4; i++) { const y = pt + ch - ch * i / 4; s += `<line x1="${pl}" x2="${W}" y1="${y}" y2="${y}" stroke="#E6E8EC" ${i ? 'stroke-dasharray="3 4"' : ''}/><text x="${pl - 8}" y="${y + 4}" text-anchor="end" font-size="11" fill="#98A2B3">${Math.round(max * i / 4)}</text>`; }
+  data.forEach((d, i) => { const h = ch * d.v / max, x = pl + i * bw + bw * .22, w = bw * .56, y = pt + ch - h, last = i === data.length - 1;
+    s += `<rect x="${x}" y="${y}" width="${w}" height="${Math.max(h, 0)}" rx="6" fill="${last ? '#C8102E' : '#F1B8C1'}"/><text x="${x + w / 2}" y="${y - 7}" text-anchor="middle" font-size="12" font-weight="600" fill="#202124">${d.v}</text><text x="${x + w / 2}" y="${H - 8}" text-anchor="middle" font-size="12" fill="#667085">${d.label}</text>`; });
+  return s + '</svg>';
+}
+function donut(parts) {
+  const tot = parts.reduce((a, p) => a + p.v, 0) || 1; let off = 25;
+  const segs = parts.map(p => { const pc = p.v / tot * 100, s = `<circle r="15.9155" cx="21" cy="21" fill="none" stroke="${p.c}" stroke-width="5" stroke-dasharray="${pc} ${100 - pc}" stroke-dashoffset="${off}"/>`; off -= pc; return s; }).join('');
+  return `<svg viewBox="0 0 42 42" class="donut" role="img" aria-label="Distribución de usuarios por rol"><circle r="15.9155" cx="21" cy="21" fill="none" stroke="#F0F2F5" stroke-width="5"/>${segs}<text x="21" y="22.4" text-anchor="middle" class="d-n">${tot}</text><text x="21" y="26.8" text-anchor="middle" class="d-l">usuarios</text></svg>`;
+}
+
+/* ============ Modales informativos ============ */
+function demoModal() {
+  const rows = [['Estudiante','estudiante@inacap.cl','Estudiante#2026'],['Bibliotecario','bibliotecario@inacap.cl','Biblio#2026'],['Administrador','admin@inacap.cl','Admin#2026']];
+  window.__creds = rows;
+  modal({title:'Credenciales de demostración', wide:true, body:
+    `<div class="alert info">${ic('info', 18)}<div>Cuentas ficticias para la presentación académica. Haz clic en «Usar» para completar el formulario.</div></div>
+    <div class="tbl-wrap" style="border:1px solid var(--line);border-radius:12px"><table style="min-width:0"><thead><tr><th>Rol</th><th>Correo</th><th>Contraseña</th><th></th></tr></thead><tbody>${rows.map((r, i) => `<tr><td class="t-strong">${r[0]}</td><td>${r[1]}</td><td><code>${r[2]}</code></td><td class="r"><button class="btn btn-sm" data-a="usecred" data-i="${i}">Usar</button></td></tr>`).join('')}</tbody></table></div>
+    <p class="muted" style="margin-top:14px">Los demás estudiantes de demostración usan la contraseña <code>Estudiante#2026</code>. La cuenta svera@inacap.cl está desactivada.</p>`,
+    buttons:[{label:'Restablecer datos de demostración', cls:'btn-danger', fn:() => { setTimeout(() => confirmBox('Restablecer datos', 'Se borrarán los cambios realizados y se cargarán nuevamente los datos iniciales.', 'Restablecer', () => { S = seed(); save(); setLock({count:0, until:0}); sessionStorage.removeItem(SKEY); location.hash = ''; render(); toast('Se cargaron nuevamente los datos iniciales.', 'info', 'Datos restablecidos'); }, true), 0); }}, {label:'Cerrar', cls:'btn'}]});
+}
+function prodModal() {
+  modal({title:'Requisitos de seguridad para producción', wide:true, body:
+    `<div class="alert warn">${ic('alert', 18)}<div>Este prototipo <b>no implementa seguridad real</b>. El bloqueo de intentos, las validaciones y las restricciones por rol son simulaciones visuales.</div></div>
+    <p>Una implementación productiva debería incluir:</p><ul class="ul">
+    <li><b>Autenticación segura:</b> inicio de sesión único (SSO) institucional con OAuth 2.0 / OpenID Connect y autenticación multifactor.</li>
+    <li><b>Contraseñas:</b> almacenadas únicamente como hash con sal (Argon2id o bcrypt); nunca en texto plano.</li>
+    <li><b>Cifrado:</b> TLS en tránsito y cifrado de datos sensibles en reposo.</li>
+    <li><b>Autorización en servidor:</b> control de acceso por roles (RBAC) validado en cada petición, no solo en la interfaz.</li>
+    <li><b>Protección contra abuso:</b> límite de intentos y bloqueo en el servidor, tokens de sesión con expiración y protección CSRF/XSS.</li>
+    <li><b>Auditoría y privacidad:</b> registro de acciones administrativas, respaldos y cumplimiento de la normativa de protección de datos personales.</li></ul>`,
+    buttons:[{label:'Entendido', cls:'btn'}]});
+}
+
+/* ============ Acciones ============ */
+const A = {
+  theme: () => { localStorage.setItem(TKEY, document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'); applyTheme(); },
+  walkin: walkInForm,
+  close: closeModal,
+  overlay: closeModal,
+  closetoast: t => t.closest('.toast')?.remove(),
+  menu: () => document.body.classList.toggle('menu-open'),
+  clearfilters: () => { ui.q = ''; ui.cat = ''; ui.av = ''; render(); },
+  togglepw: t => { const i = $('#li-pass'), show = i.type === 'password'; i.type = show ? 'text' : 'password'; t.innerHTML = ic(show ? 'eyeoff' : 'eye'); t.setAttribute('aria-pressed', show); t.setAttribute('aria-label', show ? 'Ocultar contraseña' : 'Mostrar contraseña'); },
+  recover: () => modal({title:'Recuperar contraseña', body:`<p class="muted" style="margin-bottom:16px">Ingresa tu correo institucional. En este prototipo el envío es simulado.</p>${field('rc-email','Correo electrónico',{type:'email',ph:'nombre@inacap.cl', req:true})}`,
+    buttons:[{label:'Cancelar'}, {label:'Enviar enlace', cls:'btn', fn:() => {
+      const e = val('rc-email'), errs = {}; if (!e) errs['rc-email'] = 'Ingresa tu correo electrónico.'; else if (!emailOk(e)) errs['rc-email'] = 'El formato del correo no es válido.';
+      if (!showErrs(errs, ['rc-email'])) return false;
+      toast('Si el correo existe, se enviaría un enlace de recuperación (simulado).', 'info', 'Solicitud enviada');
+    }}]}),
+  demo: demoModal,
+  prod: prodModal,
+  usecred: t => { const c = window.__creds[+t.dataset.i]; closeModal(); $('#li-email').value = c[1]; $('#li-pass').value = c[2]; formErr(''); $('#li-btn').focus(); },
+  logout: (t, e) => { e.preventDefault(); confirmBox('Cerrar sesión', '¿Seguro que deseas cerrar tu sesión?', 'Cerrar sesión', () => { sessionStorage.removeItem(SKEY); location.hash = ''; document.body.classList.remove('menu-open'); render(); toast('Tu sesión se cerró correctamente.', 'info', 'Sesión cerrada'); }); },
+  tab: t => { ui.tab[t.dataset.k] = t.dataset.v; render(); },
+  detail: t => showDetail(+t.dataset.id),
+  request: t => askRequest(+t.dataset.id),
+  cancelreq: t => { const id = +t.dataset.id; confirmBox('Cancelar solicitud', '¿Deseas cancelar esta solicitud pendiente?', 'Sí, cancelar', () => { S.requests = S.requests.filter(r => r.id !== id); save(); render(); toast('La solicitud fue eliminada de tu lista.', 'info', 'Solicitud cancelada'); }, true); },
+  approve: t => { const r = S.requests.find(x => x.id === +t.dataset.id), b = bookOf(r.bookId);
+    confirmBox('Aprobar solicitud', `¿Aprobar la solicitud de <b>${esc(uName(r.studentId))}</b> para <b>${esc(b?.title)}</b>? Se registrará un préstamo de ${LOAN_DAYS} días.`, 'Aprobar', () => {
+      if (!b || avail(b) <= 0) { toast('No hay ejemplares disponibles para aprobar esta solicitud.', 'error', 'Sin ejemplares'); return; }
+      const loan = {id:nid(S.loans), studentId:r.studentId, bookId:r.bookId, from:todayS(), due:addDays(LOAN_DAYS), returned:null};
+      S.loans.push(loan); r.status = 'approved'; r.loanId = loan.id; flash = 'req-' + r.id; save(); render(); toast(`Préstamo registrado para ${uName(r.studentId)}.`, 'ok', 'Solicitud aprobada');
+    }); },
+  reject: t => { const r = S.requests.find(x => x.id === +t.dataset.id);
+    confirmBox('Rechazar solicitud', `¿Rechazar la solicitud de <b>${esc(uName(r.studentId))}</b> para <b>${esc(bTitle(r.bookId))}</b>?`, 'Rechazar', () => { r.status = 'rejected'; flash = 'req-' + r.id; save(); render(); toast(`Se notificará a ${uName(r.studentId)} (simulado).`, 'warn', 'Solicitud rechazada'); }, true); },
+  return: t => { const l = S.loans.find(x => x.id === +t.dataset.id);
+    confirmBox('Registrar devolución', `¿Registrar la devolución de <b>${esc(bTitle(l.bookId))}</b> por parte de ${esc(uName(l.studentId))}?`, 'Registrar devolución', () => { l.returned = todayS(); flash = 'loan-' + l.id; save(); render(); toast('El libro vuelve a estar disponible en el catálogo.', 'ok', 'Devolución registrada'); }); },
+  newloan: loanForm,
+  newbook: () => bookForm(),
+  editbook: t => bookForm(+t.dataset.id),
+  newuser: userForm,
+  toggleuser: t => { const u = userOf(+t.dataset.id), self = me();
+    if (u.id === self.id) return toast('No puedes desactivar tu propia cuenta.', 'error');
+    confirmBox(u.active ? 'Desactivar cuenta' : 'Activar cuenta', `¿${u.active ? 'Desactivar' : 'Activar'} la cuenta de <b>${esc(u.name)}</b>?${u.active ? ' No podrá iniciar sesión.' : ''}`, u.active ? 'Desactivar' : 'Activar', () => { u.active = !u.active; flash = 'user-' + u.id; save(); render(); toast(`La cuenta de ${u.name} quedó ${u.active ? 'activa' : 'inactiva'}.`, 'ok', u.active ? 'Cuenta activada' : 'Cuenta desactivada'); }, u.active); },
+  resetpw: t => { const u = userOf(+t.dataset.id);
+    confirmBox('Restablecer contraseña', `Se generará una contraseña temporal para <b>${esc(u.name)}</b> (simulado).`, 'Restablecer', () => {
+      const tmp = 'Tmp#' + Math.random().toString(36).slice(2, 8) + 'A9'; u.pass = tmp; flash = 'user-' + u.id; save(); render();
+      setTimeout(() => modal({title:'Contraseña restablecida', body:`<div class="alert ok">${ic('check', 18)}<div>La contraseña de ${esc(u.name)} fue restablecida.</div></div><p>Contraseña temporal: <code>${esc(tmp)}</code></p><p class="muted" style="margin-top:10px">En producción se enviaría un enlace seguro al correo del usuario; nunca se muestra la contraseña.</p>`, buttons:[{label:'Cerrar', cls:'btn'}]}), 0);
+    }); }
+};
+
+/* ============ Eventos globales ============ */
+document.addEventListener('click', e => {
+  const m = e.target.closest('[data-mi]');
+  if (m) { const b = modalBtns[+m.dataset.mi]; const r = b && b.fn ? b.fn() : undefined; if (r !== false) { if ($('#modal-root .modal') && modalBtns[+m.dataset.mi] === b) closeModal(); } return; }
+  const t = e.target.closest('[data-a]'); if (!t) return;
+  if (t.dataset.a === 'overlay' && e.target !== t) return;
+  const f = A[t.dataset.a]; if (f) f(t, e);
+});
+document.addEventListener('submit', e => { if (e.target.id === 'login-form') { e.preventDefault(); doLogin(); } });
+function onFilter(e) {
+  const t = e.target.closest('[data-in]');
+  if (t) { ui[t.dataset.in] = t.value; const live = $('#live'); if (live) live.innerHTML = cur === 'catalogo' ? gridHtml() : bookRows(); return; }
+  if (e.target.id === 'nu-pass') $('#pw-list').innerHTML = pwList(e.target.value);
+}
+document.addEventListener('input', onFilter);
+document.addEventListener('change', e => {
+  onFilter(e);
+  const r = e.target.closest('[data-ch="role"]'); if (!r) return;
+  const u = userOf(+r.dataset.id);
+  if (u.id === me().id && r.value !== u.role) { toast('No puedes cambiar tu propio rol.', 'error'); render(); return; }
+  u.role = r.value; flash = 'user-' + u.id; save(); render(); toast(`${u.name} ahora es ${ROLE[u.role]}.`, 'ok', 'Rol actualizado');
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); document.body.classList.remove('menu-open'); } });
+window.addEventListener('hashchange', () => { ui = {q:'', cat:'', av:'', tab:{}}; document.body.classList.remove('menu-open'); closeModal(); render(); window.scrollTo(0, 0); });
+window.addEventListener('storage', e => { if (e.key === KEY && e.newValue) { try { S = JSON.parse(e.newValue); render(); } catch (x) {} } });
+
+render();
+})();
+</script>
+</body>
+</html>
